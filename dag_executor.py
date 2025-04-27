@@ -39,9 +39,11 @@ class DAGExecutor:
                     logging.info(f"Submitting task: {task_name}")
                     prior_results = [self.results[dependency] for dependency in self.dag[task_name]]
                     futures[task_name] = executor.submit(task_func, *prior_results)  # Store the future
-
+ 
+                concurrent.futures.wait(futures.values(), return_when=concurrent.futures.FIRST_COMPLETED)
+                
                 # Collect results as they become available.
-                for task, f in futures.items():
+                for task, f in list(futures.items()): # Iterate over a copy.
                     if f.done():
                         self.results[task] = f.result()
                         self.sorter.done(task)
